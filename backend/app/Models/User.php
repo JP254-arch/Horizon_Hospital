@@ -11,6 +11,7 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    // Mass assignable fields
     protected $fillable = [
         'name',
         'email',
@@ -18,12 +19,13 @@ class User extends Authenticatable
         'role'
     ];
 
+    // Hidden fields
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    // If user is a doctor
+    // Doctor profile relationship
     public function doctorProfile()
     {
         return $this->hasOne(DoctorProfile::class);
