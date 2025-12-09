@@ -1,19 +1,24 @@
-import { useEffect, useState } from "react";
-import api from "./api";
+import { Routes, Route } from "react-router-dom";
+import Navbar from "./components/navbar";
+import Home from "./pages/Home";
+import Patients from "./pages/Patients";
+import Doctors from "./pages/Doctors";
+import Appointments from "./pages/Appointments";
 
 function App() {
-  const [message, setMessage] = useState<string>("");
-
-  useEffect(() => {
-    api.get("/test")
-      .then(res => setMessage(res.data.message))
-      .catch(err => console.error(err));
-  }, []);
-
   return (
-    <div className="App">
-      <h1>{message || "Connected"}</h1>
-    </div>
+    <>
+      <Navbar />
+
+      <div style={{ padding: "20px" }}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/patients" element={<Patients />} />
+          <Route path="/doctors" element={<Doctors />} />
+          <Route path="/appointments" element={<Appointments />} />
+        </Routes>
+      </div>
+    </>
   );
 }
 
