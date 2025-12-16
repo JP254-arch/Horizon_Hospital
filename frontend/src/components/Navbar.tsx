@@ -55,6 +55,8 @@ function Navbar() {
         <Link style={linkStyle} to="/appointments">Appointments</Link>
         <Link style={linkStyle} to="/register">Register</Link>
         <Link style={linkStyle} to="/login">Login</Link>
+        <Link style={linkStyle} to="/About">About</Link>
+        <Link style={linkStyle} to="/contact">Contact</Link>
       </div>
 
       {/* MOBILE DROPDOWN MENU */}
@@ -77,6 +79,9 @@ function Navbar() {
           <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/patients">Patients</Link>
           <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/doctors">Doctors</Link>
           <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/appointments">Appointments</Link>
+          <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/register">Register</Link>
+          <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/login">Login</Link>
+
         </div>
       )}
     </nav>

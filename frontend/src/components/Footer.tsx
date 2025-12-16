@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
         <div className="text-center md:text-left">
           <a href="/" className="flex items-center justify-center md:justify-start mb-4">
             <img
-              src="/images/logo.jpeg"
+              src="/public/logo.avif"
               alt="Logo"
               className="rounded-full w-20 h-20 md:w-24 md:h-24 shadow-lg"
             />

@@ -7,6 +7,9 @@ import Doctors from "./pages/Doctors";
 import Appointments from "./pages/Appointments";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
+import About from "./pages/About";
+import Contact from './pages/Contact';
+
 
 
 // Layout wrapper component for nested routes
@@ -26,6 +29,10 @@ function App() {
         <Route path="/appointments" element={<Appointments />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/logout" element={<Login />} />
+        <Route path="/About" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+
       </Route>
     </Routes>
   );

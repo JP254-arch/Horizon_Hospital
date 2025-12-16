@@ -18,7 +18,7 @@ const Login: React.FC = () => {
           {/* Logo */}
           <div className="flex justify-center mb-6">
             <img
-              src="/images/horizon-logo.png"
+              src="/public/logo.avif"
               alt="Horizon Hospital Logo"
               className="h-16 w-16 rounded-full shadow-lg"
             />
