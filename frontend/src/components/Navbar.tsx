@@ -62,8 +62,6 @@ function Navbar() {
         <Link style={linkStyle} to="/admin-dashboard">Admin Dashboard</Link>
         <Link style={linkStyle} to="/department-dashboard">Department Dashboard</Link>
         <Link style={linkStyle} to="/patient-dashboard">Patient Dashboard</Link>
-        <Link style={linkStyle} to="/departments">Departments</Link>
-        <Link style={linkStyle} to="/users">Users</Link>
       </div>
 
       {/* MOBILE DROPDOWN MENU */}

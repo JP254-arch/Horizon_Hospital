@@ -1,6 +1,7 @@
 // src/pages/DepartmentMemberDashboard.tsx
 import React from "react";
 import { FaUser, FaTasks, FaBell, FaClipboardList } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 const DepartmentDashboard: React.FC = () => {
   return (
@@ -9,30 +10,30 @@ const DepartmentDashboard: React.FC = () => {
       <aside className="w-64 bg-white shadow-lg flex flex-col">
         <div className="p-6 text-2xl font-bold border-b">Horizon Hospital</div>
         <nav className="flex-1 p-4 space-y-4">
-          <a
-            href="#"
+          <Link
+            to="/profile"
             className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition"
           >
             <FaUser /> Profile
-          </a>
-          <a
-            href="#"
+          </Link>
+          <Link
+            to="/tasks"
             className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition"
           >
             <FaTasks /> Tasks
-          </a>
-          <a
-            href="#"
+          </Link>
+          <Link
+            to="/department-info"
             className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition"
           >
             <FaClipboardList /> Department Info
-          </a>
-          <a
-            href="#"
+          </Link>
+          <Link
+            to="/notifications"
             className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition"
           >
             <FaBell /> Notifications
-          </a>
+          </Link>
         </nav>
       </aside>
 
@@ -86,18 +87,10 @@ const DepartmentDashboard: React.FC = () => {
         <section>
           <h2 className="text-2xl font-bold mb-4">Department Info</h2>
           <div className="bg-white shadow rounded p-4">
-            <p>
-              Department Name: Cardiology
-            </p>
-            <p>
-              Members: 15
-            </p>
-            <p>
-              Head of Department: Dr. Jane Smith
-            </p>
-            <p>
-              Active Tasks: 12
-            </p>
+            <p>Department Name: Cardiology</p>
+            <p>Members: 15</p>
+            <p>Head of Department: Dr. Jane Smith</p>
+            <p>Active Tasks: 12</p>
           </div>
         </section>
       </main>

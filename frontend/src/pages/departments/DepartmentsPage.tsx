@@ -1,15 +1,41 @@
 // src/pages/departments/DepartmentsPage.tsx
 import { useState } from "react";
 import DepartmentForm from "../../components/departments/DepartmentForm";
-// import { useDepartments, Department } from "../../context/DepartmentContext";
-import { useDepartments, type Department } from "../../context/DepartmentContext";
+
+export interface Department {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  isClinical: boolean;
+  isActive: boolean;
+}
+
+const initialDepartments: Department[] = [
+  {
+    id: "dep_admin",
+    code: "ADMIN",
+    name: "Administration & Management",
+    description: "Overall hospital governance and operations",
+    isClinical: false,
+    isActive: true,
+  },
+  {
+    id: "dep_front_office",
+    code: "FRONT_OFFICE",
+    name: "Front Office / Patient Services",
+    description: "Patient registration and appointments",
+    isClinical: false,
+    isActive: true,
+  },
+];
 
 export default function DepartmentsPage() {
-  const { departments, toggleDepartmentStatus } = useDepartments();
-
-  const [localDepartments, setLocalDepartments] = useState<Department[]>(departments);
+  const [departments, setDepartments] =
+    useState<Department[]>(initialDepartments);
   const [showForm, setShowForm] = useState(false);
-  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+  const [editingDepartment, setEditingDepartment] =
+    useState<Department | null>(null);
 
   const handleAdd = () => {
     setEditingDepartment(null);
@@ -21,15 +47,25 @@ export default function DepartmentsPage() {
     setShowForm(true);
   };
 
+  const handleToggleStatus = (id: string) => {
+    setDepartments(prev =>
+      prev.map(d =>
+        d.id === id ? { ...d, isActive: !d.isActive } : d
+      )
+    );
+  };
+
   const handleSave = (data: Omit<Department, "id">) => {
     if (editingDepartment) {
-      // Update locally
-      setLocalDepartments(prev =>
-        prev.map(d => (d.id === editingDepartment.id ? { ...d, ...data } : d))
+      setDepartments(prev =>
+        prev.map(d =>
+          d.id === editingDepartment.id
+            ? { ...editingDepartment, ...data }
+            : d
+        )
       );
     } else {
-      // Add new department locally
-      setLocalDepartments(prev => [
+      setDepartments(prev => [
         ...prev,
         { id: `dep_${Date.now()}`, ...data },
       ]);
@@ -54,24 +90,22 @@ export default function DepartmentsPage() {
           <thead className="bg-gray-100">
             <tr>
               <th className="p-4">Name</th>
+              <th className="p-4">Code</th>
+              <th className="p-4">Type</th>
               <th className="p-4">Status</th>
               <th className="p-4">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {localDepartments.map(dept => (
+            {departments.map(dept => (
               <tr key={dept.id} className="border-t">
                 <td className="p-4 font-medium">{dept.name}</td>
+                <td className="p-4 text-gray-600">{dept.code}</td>
                 <td className="p-4">
-                  <span
-                    className={`px-2 py-1 rounded text-sm ${
-                      dept.isActive
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {dept.isActive ? "Active" : "Inactive"}
-                  </span>
+                  {dept.isClinical ? "Clinical" : "Non-Clinical"}
+                </td>
+                <td className="p-4">
+                  {dept.isActive ? "Active" : "Inactive"}
                 </td>
                 <td className="p-4 flex gap-4">
                   <button
@@ -80,8 +114,9 @@ export default function DepartmentsPage() {
                   >
                     Edit
                   </button>
+
                   <button
-                    onClick={() => toggleDepartmentStatus(dept.id)}
+                    onClick={() => handleToggleStatus(dept.id)}
                     className="text-red-600 hover:underline"
                   >
                     {dept.isActive ? "Deactivate" : "Activate"}

@@ -3,6 +3,7 @@ import { Routes, Route, Outlet } from "react-router-dom";
 import Layout from "./components/layout";
 import { DepartmentProvider } from "./context/DepartmentContext"; // <-- wrap the app
 
+
 import Home from "./pages/Home";
 import Patients from "./pages/Patients";
 import Doctors from "./pages/Doctors";
@@ -18,6 +19,8 @@ import DepartmentDashboard from "./pages/dashboards/DepartmentDashboard";
 import PatientDashboard from "./pages/dashboards/PatientDashboard";
 import DepartmentsPage from "./pages/departments/DepartmentsPage";
 import UsersPage from "./pages/users/UsersPage";
+import ReportsPage from "./pages/reports/ReportsPage";
+
 
 // Layout wrapper component for nested routes
 const LayoutWrapper = () => (
@@ -49,6 +52,9 @@ function App() {
 
           {/* Departments */}
           <Route path="/departments" element={<DepartmentsPage />} />
+          <Route path="/department-details" element={<DepartmentDashboard />} />
+          <Route path="/reports" element={<ReportsPage />} />
+
 
           {/* Users */}
           <Route path="/users" element={<UsersPage />} />

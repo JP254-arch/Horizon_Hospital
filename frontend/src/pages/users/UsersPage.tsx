@@ -109,7 +109,7 @@ export default function UsersPage() {
                   className="text-red-600 hover:underline"
                   onClick={() => toggleUserStatus(user.id)}
                 >
-                  {user.isActive ? "Disable" : "Enable"}
+                  {user.isActive ? "Deactivate" : "Activate"}
                 </button>
               </td>
             </tr>
