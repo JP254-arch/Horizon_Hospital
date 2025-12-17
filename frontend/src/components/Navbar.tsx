@@ -50,13 +50,20 @@ function Navbar() {
         }}
       >
         <Link style={linkStyle} to="/">Home</Link>
+        <Link style={linkStyle} to="/about">About</Link>
+        <Link style={linkStyle} to="/contact">Contact</Link>
         <Link style={linkStyle} to="/patients">Patients</Link>
         <Link style={linkStyle} to="/doctors">Doctors</Link>
         <Link style={linkStyle} to="/appointments">Appointments</Link>
         <Link style={linkStyle} to="/register">Register</Link>
         <Link style={linkStyle} to="/login">Login</Link>
-        <Link style={linkStyle} to="/About">About</Link>
-        <Link style={linkStyle} to="/contact">Contact</Link>
+
+        {/* Dashboards */}
+        <Link style={linkStyle} to="/admin-dashboard">Admin Dashboard</Link>
+        <Link style={linkStyle} to="/department-dashboard">Department Dashboard</Link>
+        <Link style={linkStyle} to="/patient-dashboard">Patient Dashboard</Link>
+        <Link style={linkStyle} to="/departments">Departments</Link>
+        <Link style={linkStyle} to="/users">Users</Link>
       </div>
 
       {/* MOBILE DROPDOWN MENU */}
@@ -66,7 +73,7 @@ function Navbar() {
           style={{
             position: "absolute",
             top: "70px",
-            right: "0",
+            right: 0,
             width: "100%",
             background: "#5086e4ff",
             display: "flex",
@@ -76,12 +83,18 @@ function Navbar() {
           }}
         >
           <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/">Home</Link>
+          <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/about">About</Link>
+          <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/contact">Contact</Link>
           <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/patients">Patients</Link>
           <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/doctors">Doctors</Link>
           <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/appointments">Appointments</Link>
           <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/register">Register</Link>
           <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/login">Login</Link>
 
+          {/* Dashboards */}
+          <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/admin-dashboard">Admin Dashboard</Link>
+          <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/department-dashboard">Department Dashboard</Link>
+          <Link style={mobileLinkStyle} onClick={() => setOpen(false)} to="/patient-dashboard">Patient Dashboard</Link>
         </div>
       )}
     </nav>

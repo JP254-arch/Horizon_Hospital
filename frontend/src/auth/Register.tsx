@@ -81,7 +81,7 @@ const Register: React.FC = () => {
         >
           <div className="flex justify-center mb-6">
             <img
-              src="/public/logo.avif"
+              src="/logo.avif"
               alt="Horizon Hospital Logo"
               className="h-20 w-20 rounded-full shadow-lg"
             />
