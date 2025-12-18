@@ -1,0 +1,84 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Department {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model User {
+  id                   Int           @id @default(autoincrement())
+  name                 String
+  email                String        @unique
+  password             String
+  role                 Role
+  department           Department?   @relation(fields: [departmentId], references: [id])
+  departmentId         Int?
+  patient              Patient?
+  appointmentsAsDoctor Appointment[] @relation("DoctorAppointments")
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+}
+
+model Patient {
+  id             Int             @id @default(autoincrement())
+  user           User            @relation(fields: [userId], references: [id])
+  userId         Int             @unique
+  dob            DateTime?
+  age            Int?
+  gender         String?
+  bloodType      String?
+  height         Float?
+  weight         Float?
+  address        String?
+  contact        String?
+  appointments   Appointment[]
+  medicalRecords MedicalRecord[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Appointment {
+  id        Int               @id @default(autoincrement())
+  patient   Patient           @relation(fields: [patientId], references: [id])
+  patientId Int
+  doctor    User?             @relation(fields: [doctorId], references: [id], name: "DoctorAppointments")
+  doctorId  Int?
+  date      DateTime
+  status    AppointmentStatus @default(SCHEDULED)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model MedicalRecord {
+  id        Int      @id @default(autoincrement())
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  patientId Int
+  type      String
+  date      DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  ADMIN
+  PATIENT
+  DEPARTMENT_MEMBER
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}

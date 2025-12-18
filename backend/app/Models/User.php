@@ -11,23 +11,39 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    // Mass assignable fields
     protected $fillable = [
         'name',
         'email',
         'password',
-        'role'
+        'role',
+        'department_id'
     ];
 
-    // Hidden fields
     protected $hidden = [
         'password',
-        'remember_token',
     ];
 
-    // Doctor profile relationship
-    public function doctorProfile()
+    // Automatically hash password
+    public function setPasswordAttribute($password)
     {
-        return $this->hasOne(DoctorProfile::class);
+        $this->attributes['password'] = bcrypt($password);
+    }
+
+    // Belongs to a department
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    // Has one patient record (if role is PATIENT)
+    public function patient()
+    {
+        return $this->hasOne(Patient::class);
+    }
+
+    // Has many appointments as doctor
+    public function appointmentsAsDoctor()
+    {
+        return $this->hasMany(Appointment::class, 'doctor_id');
     }
 }

@@ -9,10 +9,14 @@ class Department extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description'];
+    protected $fillable = [
+        'name',
+        'description',
+    ];
 
-    public function doctors()
+    // A department has many users
+    public function users()
     {
-        return $this->hasMany(DoctorProfile::class);
+        return $this->hasMany(User::class);
     }
 }
