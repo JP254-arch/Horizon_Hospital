@@ -1,16 +1,83 @@
-// src/pages/dashboards/PatientDashboard.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { FaUser } from "react-icons/fa";
+import axios from "axios";
+
+interface Appointment {
+  id: string;
+  date: string;
+  doctor: string;
+  status: string;
+}
+
+interface MedicalRecord {
+  id: string;
+  type: string;
+  date: string;
+}
+
+interface CurrentUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
 
 export default function PatientDashboard() {
-  const [appointments] = useState([
-    { id: 'app1', date: '2025-12-20', doctor: 'Dr. Smith', status: 'Upcoming' },
-    { id: 'app2', date: '2025-12-10', doctor: 'Dr. Jane', status: 'Completed' },
-  ]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([]);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [medicalRecords] = useState([
-    { id: 'rec1', type: 'Blood Test', date: '2025-11-15' },
-    { id: 'rec2', type: 'X-Ray', date: '2025-10-30' },
-  ]);
+  const token = localStorage.getItem("authToken");
+
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await axios.get("/api/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCurrentUser(res.data);
+    } catch (err) {
+      console.error("Failed to fetch current user", err);
+    }
+  };
+
+  const fetchAppointments = async () => {
+    try {
+      const res = await axios.get("/api/appointments", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAppointments(res.data);
+    } catch (err) {
+      console.error("Failed to fetch appointments", err);
+    }
+  };
+
+  const fetchMedicalRecords = async () => {
+    try {
+      const res = await axios.get("/api/medical-records", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMedicalRecords(res.data);
+    } catch (err) {
+      console.error("Failed to fetch medical records", err);
+    }
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true);
+      await Promise.all([fetchCurrentUser(), fetchAppointments(), fetchMedicalRecords()]);
+      setLoading(false);
+    };
+    init();
+  }, []);
+
+  if (loading || !currentUser) {
+    return <div className="p-6">Loading dashboard...</div>;
+  }
+
+  const upcomingAppointments = appointments.filter(a => a.status === "Upcoming").length;
 
   return (
     <div className="flex h-screen">
@@ -18,29 +85,48 @@ export default function PatientDashboard() {
       <aside className="w-64 bg-gray-800 text-white p-6">
         <h2 className="text-2xl font-bold mb-8">Patient Panel</h2>
         <nav className="flex flex-col gap-4">
-          <a href="#" className="hover:bg-gray-700 px-3 py-2 rounded">Dashboard</a>
-          <a href="#" className="hover:bg-gray-700 px-3 py-2 rounded">My Appointments</a>
-          <a href="#" className="hover:bg-gray-700 px-3 py-2 rounded">Medical Records</a>
-          <a href="#" className="hover:bg-gray-700 px-3 py-2 rounded">Billing</a>
+          <Link to="/patient-dashboard" className="hover:bg-gray-700 px-3 py-2 rounded">
+            Dashboard
+          </Link>
+          <Link to="/appointments" className="hover:bg-gray-700 px-3 py-2 rounded">
+            My Appointments
+          </Link>
+          <Link to="/medical-records" className="hover:bg-gray-700 px-3 py-2 rounded">
+            Medical Records
+          </Link>
+          <Link to="/billing" className="hover:bg-gray-700 px-3 py-2 rounded">
+            Billing
+          </Link>
         </nav>
       </aside>
 
-      {/* Main content */}
+      {/* Main Content */}
       <main className="flex-1 p-6 bg-gray-100 overflow-auto">
         <header className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <div>Welcome, Patient</div>
+          <div>
+            <h1 className="text-3xl text-yellow-600 font-bold">Patient Dashboard</h1>
+            <p className="text-violet-600">Welcome, {currentUser.name}</p>
+          </div>
+          <Link to="/settings">
+            <FaUser className="text-2xl text-gray-600 cursor-pointer hover:text-gray-800" />
+          </Link>
         </header>
 
-        {/* Cards */}
-        <div className="grid grid-cols-3 gap-6 mb-6">
-          <div className="p-4 bg-blue-100 rounded-lg shadow">Upcoming Appointments: {appointments.filter(a => a.status === 'Upcoming').length}</div>
-          <div className="p-4 bg-green-100 rounded-lg shadow">Medical Records: {medicalRecords.length}</div>
-          <div className="p-4 bg-yellow-100 rounded-lg shadow">Outstanding Bills: $200</div>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="p-4 bg-blue-100 rounded-lg shadow">
+            Upcoming Appointments: {upcomingAppointments}
+          </div>
+          <div className="p-4 bg-green-100 rounded-lg shadow">
+            Medical Records: {medicalRecords.length}
+          </div>
+          <div className="p-4 bg-yellow-100 rounded-lg shadow">
+            Outstanding Bills: $200
+          </div>
         </div>
 
         {/* Appointments Table */}
-        <div className="bg-white rounded-lg shadow overflow-x-auto mb-6">
+        <section className="bg-white rounded-lg shadow overflow-x-auto mb-6">
           <h2 className="p-4 font-semibold text-xl">Appointments</h2>
           <table className="w-full text-left">
             <thead className="bg-gray-100">
@@ -60,10 +146,10 @@ export default function PatientDashboard() {
               ))}
             </tbody>
           </table>
-        </div>
+        </section>
 
         {/* Medical Records Table */}
-        <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <section className="bg-white rounded-lg shadow overflow-x-auto">
           <h2 className="p-4 font-semibold text-xl">Medical Records</h2>
           <table className="w-full text-left">
             <thead className="bg-gray-100">
@@ -81,7 +167,7 @@ export default function PatientDashboard() {
               ))}
             </tbody>
           </table>
-        </div>
+        </section>
       </main>
     </div>
   );

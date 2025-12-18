@@ -1,47 +1,56 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [remember, setRemember] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
 
-    // Simulate role-based login
-    let role: string | null = null;
+    try {
+      const response = await axios.post("/api/login", {
+        email,
+        password,
+      });
 
-    // Mock logic: assign role based on email for testing
-    if (email.endsWith("@admin.com")) {
-      role = "admin";
-    } else if (email.endsWith("@department.com")) {
-      role = "member";
-    } else if (email.endsWith("@patient.com")) {
-      role = "patient";
-    }
+      const { token, user } = response.data;
 
-    if (!role) {
-      alert("Invalid email or role not recognized.");
-      return;
-    }
+      if (!token || !user) {
+        alert("Invalid credentials.");
+        setLoading(false);
+        return;
+      }
 
-    // Save login state (mock)
-    localStorage.setItem("userRole", role);
-    localStorage.setItem("userEmail", email);
+      // Save JWT token to localStorage or cookie
+      localStorage.setItem("authToken", token);
+      localStorage.setItem("userRole", user.role);
+      localStorage.setItem("userEmail", user.email);
 
-    // Redirect to the appropriate dashboard
-    switch (role) {
-      case "admin":
-        navigate("/admin-dashboard");
-        break;
-      case "member":
-        navigate("/department-dashboard");
-        break;
-      case "patient":
-        navigate("/patient-dashboard");
-        break;
+      // Redirect based on role
+      switch (user.role.toLowerCase()) {
+        case "admin":
+          navigate("/admin-dashboard");
+          break;
+        case "staff":
+          navigate("/department-dashboard");
+          break;
+        case "patient":
+          navigate("/patient-dashboard");
+          break;
+        default:
+          alert("Unknown user role.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || "Login failed.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -108,9 +117,12 @@ const Login: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition duration-200 shadow-md"
+              disabled={loading}
+              className={`w-full ${
+                loading ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
+              } text-white font-semibold py-3 rounded-xl transition duration-200 shadow-md`}
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </button>
           </form>
         </div>

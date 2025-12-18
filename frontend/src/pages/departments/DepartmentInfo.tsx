@@ -1,22 +1,42 @@
-// src/pages/departments/DepartmentInfo.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FaUser, FaTasks, FaBell, FaClipboardList } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import axios from "axios";
+
+interface Department {
+  id: string;
+  name: string;
+  head: string;
+  membersCount: number;
+  location: string;
+  contact: string;
+  workingHours: string;
+  policies: string[];
+}
 
 const DepartmentInfo: React.FC = () => {
-  const department = {
-    name: "Cardiology",
-    head: "Dr. Jane Smith",
-    membersCount: 15,
-    location: "Building A, Floor 3",
-    contact: "cardiology@hospital.com | +123 456 7890",
-    workingHours: "Mon-Fri 8:00 AM - 5:00 PM",
-    policies: [
-      "All patients must book appointments in advance.",
-      "Doctors are available for consultation during working hours.",
-      "Emergency cases are prioritized at all times.",
-    ],
+  const { departmentId } = useParams<{ departmentId: string }>();
+  const [department, setDepartment] = useState<Department | null>(null);
+  const token = localStorage.getItem("authToken");
+
+  const fetchDepartment = async () => {
+    try {
+      const res = await axios.get(`/api/departments/${departmentId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDepartment(res.data);
+    } catch (err) {
+      console.error("Failed to fetch department info:", err);
+    }
   };
+
+  useEffect(() => {
+    if (departmentId) fetchDepartment();
+  }, [departmentId]);
+
+  if (!department) {
+    return <div className="p-6">Loading department info...</div>;
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -25,32 +45,28 @@ const DepartmentInfo: React.FC = () => {
         <div className="p-6 text-xl font-bold border-b">{department.name}</div>
         <nav className="flex-1 p-4 space-y-4">
           <Link
-            to="/Profile"
+            to={`/departments/${department.id}/profile`}
             className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition"
           >
-            <FaUser />
-            Profile
+            <FaUser /> Profile
           </Link>
           <Link
-            to="/Tasks"
+            to={`/departments/${department.id}/tasks`}
             className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition"
           >
-            <FaTasks />
-            Tasks
+            <FaTasks /> Tasks
           </Link>
           <Link
-            to="/Info"
+            to={`/departments/${department.id}/info`}
             className="flex items-center gap-3 p-2 rounded bg-gray-200 transition"
           >
-            <FaClipboardList />
-            Department Info
+            <FaClipboardList /> Department Info
           </Link>
           <Link
-            to="/Notifications"
+            to={`/departments/${department.id}/notifications`}
             className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition"
           >
-            <FaBell />
-            Notifications
+            <FaBell /> Notifications
           </Link>
         </nav>
       </aside>

@@ -1,7 +1,7 @@
-// src/pages/Register.tsx
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { TextField, Button, Typography, Paper } from "@mui/material";
+import axios from "axios";
 
 interface FormState {
   fullName: string;
@@ -26,6 +26,9 @@ const Register: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -41,14 +44,49 @@ const Register: React.FC = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
-    console.log("Registering user:", form);
+
+    setLoading(true);
+
+    try {
+      const response = await axios.post("/api/register", {
+        name: form.fullName,
+        email: form.email,
+        password: form.password,
+        password_confirmation: form.confirmPassword,
+        role: "patient", // Default role for self-registration
+      });
+
+      // Optionally log user in automatically
+      const { token, user } = response.data;
+
+      if (token && user) {
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("userRole", user.role);
+        localStorage.setItem("userEmail", user.email);
+
+        // Redirect to patient dashboard
+        navigate("/patient-dashboard");
+      } else {
+        alert("Registration successful. Please login.");
+        navigate("/login");
+      }
+    } catch (err: any) {
+      console.error(err);
+      if (err.response?.data?.errors) {
+        setErrors(err.response.data.errors);
+      } else {
+        alert(err.response?.data?.message || "Registration failed.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -140,9 +178,10 @@ const Register: React.FC = () => {
               variant="contained"
               color="error"
               fullWidth
+              disabled={loading}
               className="py-3 mt-2 rounded-xl shadow-md hover:shadow-lg transition"
             >
-              Register
+              {loading ? "Registering..." : "Register"}
             </Button>
 
             <Typography

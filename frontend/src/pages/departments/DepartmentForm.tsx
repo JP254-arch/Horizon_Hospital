@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 interface DepartmentFormData {
   name: string;
@@ -9,43 +10,60 @@ interface DepartmentFormData {
 }
 
 interface Props {
-  initialData?: DepartmentFormData;
-  onSubmit: (data: DepartmentFormData) => void;
+  initialData?: DepartmentFormData & { id?: string };
+  onSuccess: () => void; // Callback after successful save
   onCancel: () => void;
 }
 
-export default function DepartmentForm({
-  initialData,
-  onSubmit,
-  onCancel,
-}: Props) {
-  const [form, setForm] = useState<DepartmentFormData>(
-    initialData ?? {
-      name: "",
-      code: "",
-      description: "",
-      isClinical: false,
-      isActive: true,
-    }
-  );
+export default function DepartmentForm({ initialData, onSuccess, onCancel }: Props) {
+  const [form, setForm] = useState<DepartmentFormData>({
+    name: "",
+    code: "",
+    description: "",
+    isClinical: false,
+    isActive: true,
+  });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const token = localStorage.getItem("authToken");
+
+  useEffect(() => {
+    if (initialData) setForm(initialData);
+  }, [initialData]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, type, value } = e.target;
-
     setForm((prev) => ({
       ...prev,
-      [name]:
-        type === "checkbox"
-          ? (e.target as HTMLInputElement).checked
-          : value,
+      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(form);
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (initialData?.id) {
+        // Update existing department
+        await axios.put(`/api/departments/${initialData.id}`, form, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        // Create new department
+        await axios.post("/api/departments", form, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+      onSuccess();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.message || "Failed to save department");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,11 +73,11 @@ export default function DepartmentForm({
           {initialData ? "Edit Department" : "Add Department"}
         </h2>
 
+        {error && <p className="text-red-600 mb-2">{error}</p>}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Department Name
-            </label>
+            <label className="block text-sm font-medium mb-1">Department Name</label>
             <input
               name="name"
               value={form.name}
@@ -70,9 +88,7 @@ export default function DepartmentForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Department Code
-            </label>
+            <label className="block text-sm font-medium mb-1">Department Code</label>
             <input
               name="code"
               value={form.code}
@@ -83,9 +99,7 @@ export default function DepartmentForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Description
-            </label>
+            <label className="block text-sm font-medium mb-1">Description</label>
             <textarea
               name="description"
               value={form.description}
@@ -119,14 +133,16 @@ export default function DepartmentForm({
               type="button"
               onClick={onCancel}
               className="px-4 py-2 rounded-lg border"
+              disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
               className="px-4 py-2 rounded-lg bg-blue-600 text-white"
+              disabled={loading}
             >
-              Save
+              {loading ? "Saving..." : "Save"}
             </button>
           </div>
         </form>

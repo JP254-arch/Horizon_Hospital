@@ -1,8 +1,9 @@
 // src/pages/reports/ReportsPage.tsx
 import { useDepartments } from "../../context/DepartmentContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
-// Mock types
+// Types
 interface User {
   id: string;
   name: string;
@@ -24,35 +25,52 @@ interface Order {
   status: string;
 }
 
-// Mock data
-const initialUsers: User[] = [
-  { id: "user1", name: "John Doe", role: "Admin", isActive: true },
-  { id: "user2", name: "Jane Smith", role: "Receptionist", isActive: true },
-  { id: "user3", name: "Michael Brown", role: "Patient", isActive: true },
-];
-
-const initialPatients: Patient[] = [
-  { id: "pat1", name: "Alice Green", age: 34, status: "Admitted" },
-  { id: "pat2", name: "Bob White", age: 45, status: "Discharged" },
-];
-
-const initialOrders: Order[] = [
-  { id: "ord1", branch: "Branch A", item: "Medicine A", status: "Pending" },
-  { id: "ord2", branch: "Branch B", item: "Medicine B", status: "Completed" },
-];
-
 export default function ReportsPage() {
   const { departments } = useDepartments();
-  const [users] = useState<User[]>(initialUsers);
-  const [patients] = useState<Patient[]>(initialPatients);
-  const [orders] = useState<Order[]>(initialOrders);
+
+  const [users, setUsers] = useState<User[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch all data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const [usersRes, patientsRes, ordersRes] = await Promise.all([
+          axios.get<User[]>("/api/users"),
+          axios.get<Patient[]>("/api/patients"),
+          axios.get<Order[]>("/api/orders"),
+        ]);
+
+        setUsers(usersRes.data);
+        setPatients(patientsRes.data);
+        setOrders(ordersRes.data);
+      } catch (err: any) {
+        console.error(err);
+        setError("Failed to fetch reports data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="p-6">Loading reports...</div>;
+  if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold mb-6">Reports</h1>
 
       {/* Cards */}
-      <div className="grid grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-4 gap-6 mb-6 md:grid-cols-2 sm:grid-cols-1">
         <div className="p-4 bg-blue-100 rounded-lg shadow">
           <h2 className="font-bold mb-2">Users</h2>
           <p>Total: {users.length}</p>

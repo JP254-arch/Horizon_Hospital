@@ -1,4 +1,3 @@
-// src/pages/users/UsersPage.tsx
 import { useState } from "react";
 
 type UserRole = "admin" | "staff" | "patient";
@@ -8,7 +7,7 @@ interface User {
   name: string;
   email: string;
   role: UserRole;
-  departmentId?: string; // optional because patients don't belong to departments
+  departmentId?: string;
   isActive: boolean;
 }
 
@@ -52,6 +51,16 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [departments] = useState<Department[]>(initialDepartments);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // NEW USER STATE
+  const [newUser, setNewUser] = useState<Omit<User, "id">>({
+    name: "",
+    email: "",
+    role: "admin",
+    departmentId: departments[0]?.id,
+    isActive: true,
+  });
 
   const toggleUserStatus = (id: string) => {
     setUsers(prev =>
@@ -61,18 +70,38 @@ export default function UsersPage() {
 
   const handleSaveEdit = () => {
     if (!editingUser) return;
-
     setUsers(prev =>
       prev.map(u => (u.id === editingUser.id ? editingUser : u))
     );
-
     setEditingUser(null);
+  };
+
+  const handleAddUser = () => {
+    const id = `user_${Date.now()}`;
+    setUsers(prev => [...prev, { id, ...newUser }]);
+    setIsAddModalOpen(false);
+    setNewUser({
+      name: "",
+      email: "",
+      role: "admin",
+      departmentId: departments[0]?.id,
+      isActive: true,
+    });
   };
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-semibold mb-6">Users Management</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold">Users Management</h1>
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded-xl"
+          onClick={() => setIsAddModalOpen(true)}
+        >
+          Add User
+        </button>
+      </div>
 
+      {/* USERS TABLE */}
       <table className="w-full text-left bg-white rounded-2xl shadow overflow-x-auto">
         <thead className="bg-gray-100">
           <tr>
@@ -95,9 +124,7 @@ export default function UsersPage() {
                   ? "—"
                   : departments.find(d => d.id === user.departmentId)?.name}
               </td>
-              <td className="p-4">
-                {user.isActive ? "Active" : "Inactive"}
-              </td>
+              <td className="p-4">{user.isActive ? "Active" : "Inactive"}</td>
               <td className="p-4 flex gap-4">
                 <button
                   className="text-blue-600 hover:underline"
@@ -117,12 +144,111 @@ export default function UsersPage() {
         </tbody>
       </table>
 
+      {/* ADD USER MODAL */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Add New User</h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium">Name</label>
+                <input
+                  className="w-full mt-1 border rounded-xl p-2"
+                  value={newUser.name}
+                  onChange={e =>
+                    setNewUser({ ...newUser, name: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium">Email</label>
+                <input
+                  className="w-full mt-1 border rounded-xl p-2"
+                  value={newUser.email}
+                  onChange={e =>
+                    setNewUser({ ...newUser, email: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium">Role</label>
+                <select
+                  className="w-full mt-1 border rounded-xl p-2"
+                  value={newUser.role}
+                  onChange={e =>
+                    setNewUser({
+                      ...newUser,
+                      role: e.target.value as UserRole,
+                      departmentId:
+                        e.target.value === "patient"
+                          ? undefined
+                          : newUser.departmentId || departments[0]?.id,
+                    })
+                  }
+                >
+                  <option value="admin">Admin</option>
+                  <option value="staff">Staff</option>
+                  <option value="patient">Patient</option>
+                </select>
+              </div>
+
+              {newUser.role !== "patient" && (
+                <div>
+                  <label className="block text-sm font-medium">Department</label>
+                  <select
+                    className="w-full mt-1 border rounded-xl p-2"
+                    value={newUser.departmentId}
+                    onChange={e =>
+                      setNewUser({ ...newUser, departmentId: e.target.value })
+                    }
+                  >
+                    {departments.map(dep => (
+                      <option key={dep.id} value={dep.id}>
+                        {dep.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={newUser.isActive}
+                  onChange={e =>
+                    setNewUser({ ...newUser, isActive: e.target.checked })
+                  }
+                />
+                <span>Active</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                className="px-4 py-2 rounded-xl border"
+                onClick={() => setIsAddModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white"
+                onClick={handleAddUser}
+              >
+                Add User
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* EDIT USER MODAL */}
       {editingUser && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Edit User</h2>
-
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium">Name</label>

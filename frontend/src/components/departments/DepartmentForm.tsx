@@ -1,5 +1,5 @@
-// src/components/departments/DepartmentForm.tsx
 import { useState } from "react";
+import axios from "axios";
 
 export interface DepartmentFormData {
   name: string;
@@ -10,12 +10,12 @@ export interface DepartmentFormData {
 }
 
 interface Props {
-  initialData?: DepartmentFormData;
-  onSubmit: (data: DepartmentFormData) => void;
+  initialData?: DepartmentFormData & { id: string };
+  onSuccess?: () => void; // Called after successful save
   onCancel: () => void;
 }
 
-export default function DepartmentForm({ initialData, onSubmit, onCancel }: Props) {
+export default function DepartmentForm({ initialData, onSuccess, onCancel }: Props) {
   const [form, setForm] = useState<DepartmentFormData>(
     initialData || {
       name: "",
@@ -25,6 +25,9 @@ export default function DepartmentForm({ initialData, onSubmit, onCancel }: Prop
       isActive: true,
     }
   );
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const token = localStorage.getItem("authToken");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -34,9 +37,34 @@ export default function DepartmentForm({ initialData, onSubmit, onCancel }: Prop
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(form);
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (initialData?.id) {
+        // Update existing department
+        await axios.patch(
+          `/api/departments/${initialData.id}`,
+          form,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        // Create new department
+        await axios.post(
+          `/api/departments`,
+          form,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+      onSuccess?.();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.message || "Failed to save department");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -45,6 +73,8 @@ export default function DepartmentForm({ initialData, onSubmit, onCancel }: Prop
         <h2 className="text-xl font-semibold mb-4">
           {initialData ? "Edit Department" : "Add Department"}
         </h2>
+
+        {error && <p className="text-red-600 mb-2">{error}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -55,6 +85,7 @@ export default function DepartmentForm({ initialData, onSubmit, onCancel }: Prop
               onChange={handleChange}
               required
               className="w-full border rounded-lg px-3 py-2"
+              disabled={loading}
             />
           </div>
 
@@ -66,6 +97,7 @@ export default function DepartmentForm({ initialData, onSubmit, onCancel }: Prop
               onChange={handleChange}
               required
               className="w-full border rounded-lg px-3 py-2"
+              disabled={loading}
             />
           </div>
 
@@ -76,6 +108,7 @@ export default function DepartmentForm({ initialData, onSubmit, onCancel }: Prop
               value={form.description}
               onChange={handleChange}
               className="w-full border rounded-lg px-3 py-2"
+              disabled={loading}
             />
           </div>
 
@@ -85,6 +118,7 @@ export default function DepartmentForm({ initialData, onSubmit, onCancel }: Prop
               name="isClinical"
               checked={form.isClinical}
               onChange={handleChange}
+              disabled={loading}
             />
             <span>Clinical Department</span>
           </div>
@@ -95,16 +129,28 @@ export default function DepartmentForm({ initialData, onSubmit, onCancel }: Prop
               name="isActive"
               checked={form.isActive}
               onChange={handleChange}
+              disabled={loading}
             />
             <span>Active</span>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
-            <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg border">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 rounded-lg border"
+              disabled={loading}
+            >
               Cancel
             </button>
-            <button type="submit" className="px-4 py-2 rounded-lg bg-blue-600 text-white">
-              Save
+            <button
+              type="submit"
+              className={`px-4 py-2 rounded-lg bg-blue-600 text-white ${
+                loading ? "opacity-70 cursor-not-allowed" : ""
+              }`}
+              disabled={loading}
+            >
+              {loading ? "Saving..." : "Save"}
             </button>
           </div>
         </form>
@@ -112,4 +158,3 @@ export default function DepartmentForm({ initialData, onSubmit, onCancel }: Prop
     </div>
   );
 }
-

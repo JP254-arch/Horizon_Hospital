@@ -1,5 +1,5 @@
-// src/pages/departments/DepartmentsPage.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import DepartmentForm from "../../components/departments/DepartmentForm";
 
 export interface Department {
@@ -11,31 +11,28 @@ export interface Department {
   isActive: boolean;
 }
 
-const initialDepartments: Department[] = [
-  {
-    id: "dep_admin",
-    code: "ADMIN",
-    name: "Administration & Management",
-    description: "Overall hospital governance and operations",
-    isClinical: false,
-    isActive: true,
-  },
-  {
-    id: "dep_front_office",
-    code: "FRONT_OFFICE",
-    name: "Front Office / Patient Services",
-    description: "Patient registration and appointments",
-    isClinical: false,
-    isActive: true,
-  },
-];
-
 export default function DepartmentsPage() {
-  const [departments, setDepartments] =
-    useState<Department[]>(initialDepartments);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [editingDepartment, setEditingDepartment] =
-    useState<Department | null>(null);
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+
+  const token = localStorage.getItem("authToken");
+
+  // Fetch all departments from backend
+  const fetchDepartments = async () => {
+    try {
+      const res = await axios.get("/api/departments", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDepartments(res.data);
+    } catch (err) {
+      console.error("Failed to fetch departments:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
 
   const handleAdd = () => {
     setEditingDepartment(null);
@@ -47,30 +44,45 @@ export default function DepartmentsPage() {
     setShowForm(true);
   };
 
-  const handleToggleStatus = (id: string) => {
-    setDepartments(prev =>
-      prev.map(d =>
-        d.id === id ? { ...d, isActive: !d.isActive } : d
-      )
-    );
+  const handleToggleStatus = async (id: string) => {
+    try {
+      const dept = departments.find(d => d.id === id);
+      if (!dept) return;
+
+      const updatedDept = { ...dept, isActive: !dept.isActive };
+
+      await axios.put(`/api/departments/${id}`, updatedDept, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setDepartments(prev =>
+        prev.map(d => (d.id === id ? updatedDept : d))
+      );
+    } catch (err) {
+      console.error("Failed to toggle department status:", err);
+    }
   };
 
-  const handleSave = (data: Omit<Department, "id">) => {
-    if (editingDepartment) {
-      setDepartments(prev =>
-        prev.map(d =>
-          d.id === editingDepartment.id
-            ? { ...editingDepartment, ...data }
-            : d
-        )
-      );
-    } else {
-      setDepartments(prev => [
-        ...prev,
-        { id: `dep_${Date.now()}`, ...data },
-      ]);
+  const handleSave = async (data: Omit<Department, "id">) => {
+    try {
+      if (editingDepartment) {
+        const updatedDept = { ...editingDepartment, ...data };
+        await axios.put(`/api/departments/${editingDepartment.id}`, updatedDept, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setDepartments(prev =>
+          prev.map(d => (d.id === editingDepartment.id ? updatedDept : d))
+        );
+      } else {
+        const res = await axios.post("/api/departments", data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setDepartments(prev => [...prev, res.data]);
+      }
+      setShowForm(false);
+    } catch (err) {
+      console.error("Failed to save department:", err);
     }
-    setShowForm(false);
   };
 
   return (
@@ -101,12 +113,8 @@ export default function DepartmentsPage() {
               <tr key={dept.id} className="border-t">
                 <td className="p-4 font-medium">{dept.name}</td>
                 <td className="p-4 text-gray-600">{dept.code}</td>
-                <td className="p-4">
-                  {dept.isClinical ? "Clinical" : "Non-Clinical"}
-                </td>
-                <td className="p-4">
-                  {dept.isActive ? "Active" : "Inactive"}
-                </td>
+                <td className="p-4">{dept.isClinical ? "Clinical" : "Non-Clinical"}</td>
+                <td className="p-4">{dept.isActive ? "Active" : "Inactive"}</td>
                 <td className="p-4 flex gap-4">
                   <button
                     onClick={() => handleEdit(dept)}
@@ -114,7 +122,6 @@ export default function DepartmentsPage() {
                   >
                     Edit
                   </button>
-
                   <button
                     onClick={() => handleToggleStatus(dept.id)}
                     className="text-red-600 hover:underline"

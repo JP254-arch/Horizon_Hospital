@@ -1,21 +1,47 @@
-// src/pages/departments/DepartmentProfile.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FaUser, FaTasks, FaBell, FaClipboardList } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import axios from "axios";
+
+interface Member {
+  id: string;
+  name: string;
+  role: string;
+  status: "Active" | "Inactive";
+}
+
+interface Department {
+  id: string;
+  name: string;
+  head: string;
+  membersCount: number;
+  description: string;
+  members: Member[];
+}
 
 const DepartmentProfile: React.FC = () => {
-  const department = {
-    name: "Cardiology",
-    head: "Dr. Jane Smith",
-    membersCount: 15,
-    description: "Responsible for heart-related treatments and patient care.",
-    members: [
-      { id: "1", name: "Dr. Alice", role: "Doctor", status: "Active" },
-      { id: "2", name: "Nurse Bob", role: "Nurse", status: "Active" },
-      { id: "3", name: "Clerk Charlie", role: "Admin", status: "Inactive" },
-      { id: "4", name: "Dr. David", role: "Doctor", status: "Active" },
-    ],
+  const { departmentId } = useParams<{ departmentId: string }>();
+  const [department, setDepartment] = useState<Department | null>(null);
+  const token = localStorage.getItem("authToken");
+
+  const fetchDepartment = async () => {
+    try {
+      const res = await axios.get(`/api/departments/${departmentId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDepartment(res.data);
+    } catch (err) {
+      console.error("Failed to fetch department:", err);
+    }
   };
+
+  useEffect(() => {
+    if (departmentId) fetchDepartment();
+  }, [departmentId]);
+
+  if (!department) {
+    return <div className="p-6">Loading department profile...</div>;
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -23,33 +49,17 @@ const DepartmentProfile: React.FC = () => {
       <aside className="w-64 bg-white shadow-lg flex flex-col">
         <div className="p-6 text-xl font-bold border-b">{department.name}</div>
         <nav className="flex-1 p-4 space-y-4">
-          <Link
-            to="/Profile"
-            className="flex items-center gap-3 p-2 rounded bg-gray-200 transition"
-          >
-            <FaUser />
-            Profile
+          <Link to={`/departments/${department.id}/profile`} className="flex items-center gap-3 p-2 rounded bg-gray-200 transition">
+            <FaUser /> Profile
           </Link>
-          <Link
-            to="/Tasks"
-            className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition"
-          >
-            <FaTasks />
-            Tasks
+          <Link to={`/departments/${department.id}/tasks`} className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition">
+            <FaTasks /> Tasks
           </Link>
-          <Link
-            to="/Info"
-            className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition"
-          >
-            <FaClipboardList />
-            Department Info
+          <Link to={`/departments/${department.id}/info`} className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition">
+            <FaClipboardList /> Department Info
           </Link>
-          <Link
-            to="/Notifications"
-            className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition"
-          >
-            <FaBell />
-            Notifications
+          <Link to={`/departments/${department.id}/notifications`} className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition">
+            <FaBell /> Notifications
           </Link>
         </nav>
       </aside>
@@ -84,18 +94,12 @@ const DepartmentProfile: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {department.members.map((member) => (
+                {department.members.map(member => (
                   <tr key={member.id} className="border-t">
                     <td className="p-4">{member.name}</td>
                     <td className="p-4">{member.role}</td>
                     <td className="p-4">
-                      <span
-                        className={`px-2 py-1 rounded text-sm ${
-                          member.status === "Active"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
+                      <span className={`px-2 py-1 rounded text-sm ${member.status === "Active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                         {member.status}
                       </span>
                     </td>
