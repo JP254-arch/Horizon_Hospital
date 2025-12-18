@@ -1,11 +1,10 @@
-// src/pages/dashboards/AdminDashboard.tsx
 import { Link } from "react-router-dom";
 import { useDepartments } from "../../context/DepartmentContext";
 
 export default function AdminDashboard() {
   const { departments } = useDepartments();
 
-  // Temporary mock users (until UserContext / backend)
+  // Temporary mock users
   const users = [
     { id: "user1", name: "John Doe", role: "Admin", isActive: true },
     { id: "user2", name: "Jane Smith", role: "Receptionist", isActive: true },
@@ -18,10 +17,16 @@ export default function AdminDashboard() {
         <h2 className="text-2xl font-bold mb-8">Admin Panel</h2>
 
         <nav className="flex flex-col gap-4">
-          <Link to="/admin-dashboard" className="hover:bg-gray-700 px-3 py-2 rounded">
+          <Link
+            to="/admin-dashboard"
+            className="hover:bg-gray-700 px-3 py-2 rounded"
+          >
             Dashboard
           </Link>
-          <Link to="/departments" className="hover:bg-gray-700 px-3 py-2 rounded">
+          <Link
+            to="/departments"
+            className="hover:bg-gray-700 px-3 py-2 rounded"
+          >
             Departments
           </Link>
           <Link to="/users" className="hover:bg-gray-700 px-3 py-2 rounded">
@@ -71,18 +76,18 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {departments.map(dep => (
+              {departments.map((dep) => (
                 <tr key={dep.id} className="border-t">
                   <td className="p-4 font-medium">{dep.name}</td>
                   <td className="p-4">
                     <span
                       className={`px-2 py-1 rounded text-sm ${
-                        dep.isActive
+                        (dep as any).isActive
                           ? "bg-green-100 text-green-700"
                           : "bg-red-100 text-red-700"
                       }`}
                     >
-                      {dep.isActive ? "Active" : "Inactive"}
+                      {(dep as any).isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
                 </tr>
