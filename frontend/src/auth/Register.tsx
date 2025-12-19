@@ -60,7 +60,7 @@ const Register: React.FC = () => {
         email: form.email,
         password: form.password,
         password_confirmation: form.confirmPassword,
-        role: "patient", // Default role for self-registration
+        role: "admin", // Default role for self-registration
       });
 
       // Optionally log user in automatically
@@ -71,8 +71,8 @@ const Register: React.FC = () => {
         localStorage.setItem("userRole", user.role);
         localStorage.setItem("userEmail", user.email);
 
-        // Redirect to patient dashboard
-        navigate("/patient-dashboard");
+        // Redirect to admin dashboard
+        navigate("/admin-dashboard");
       } else {
         alert("Registration successful. Please login.");
         navigate("/login");

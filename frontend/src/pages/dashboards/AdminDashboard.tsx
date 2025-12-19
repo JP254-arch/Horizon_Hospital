@@ -48,11 +48,11 @@ export default function AdminDashboard() {
         setCurrentUser(userRes.data || null);
         setDepartments(depRes.data || []);
         setUsers(usersRes.data || []);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Dashboard fetch error:", err);
 
         // Check if API returned a response
-        if (err.response) {
+        if (axios.isAxiosError(err) && err.response) {
           setError(err.response.data?.message || "Failed to fetch dashboard data.");
         } else {
           setError("Failed to connect to backend.");
