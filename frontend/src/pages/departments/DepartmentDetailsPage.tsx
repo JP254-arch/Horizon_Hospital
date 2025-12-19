@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -26,46 +27,55 @@ export default function DepartmentDetailsPage({ departmentId, onBack }: Props) {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const token = localStorage.getItem("authToken");
 
-  useEffect(() => {
-    const fetchDepartmentData = async () => {
-      try {
-        setLoading(true);
-        const deptRes = await axios.get(`/api/departments/${departmentId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const usersRes = await axios.get(`/api/departments/${departmentId}/users`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+  // Dedicated Axios instance
+  const api = axios.create({
+    baseURL: "http://127.0.0.1:8000/api",
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      Accept: "application/json",
+    },
+  });
 
-        setDept(deptRes.data);
-        setUsers(usersRes.data);
-      } catch (err: any) {
-        console.error(err);
-        setError(err.response?.data?.message || "Failed to load department data");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchDepartmentData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    fetchDepartmentData();
-  }, [departmentId, token]);
+      const [deptRes, usersRes] = await Promise.all([
+        api.get(`/departments/${departmentId}`),
+        api.get(`/departments/${departmentId}/users`),
+      ]);
+
+      setDept(deptRes.data);
+      setUsers(usersRes.data);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.message || "Failed to load department data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleDepartmentStatus = async () => {
     if (!dept) return;
     try {
-      await axios.patch(
-        `/api/departments/${dept.id}`,
-        { isActive: !dept.isActive },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setDept((prev) => prev && { ...prev, isActive: !prev.isActive });
+      const res = await api.patch(`/departments/${dept.id}`, {
+        isActive: !dept.isActive,
+      });
+
+      setDept((prev) => (prev ? { ...prev, isActive: res.data.isActive ?? !prev.isActive } : prev));
     } catch (err: any) {
       console.error(err);
       setError(err.response?.data?.message || "Failed to update department status");
     }
   };
+
+  useEffect(() => {
+    fetchDepartmentData();
+  }, [departmentId]);
 
   if (loading) return <div className="p-6">Loading...</div>;
   if (error) return <div className="p-6 text-red-600">{error}</div>;

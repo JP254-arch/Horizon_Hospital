@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react";
 import { FaUser, FaTasks, FaBell, FaClipboardList } from "react-icons/fa";
 import { Link, useParams } from "react-router-dom";
@@ -22,43 +23,68 @@ interface Department {
 const DepartmentProfile: React.FC = () => {
   const { departmentId } = useParams<{ departmentId: string }>();
   const [department, setDepartment] = useState<Department | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const token = localStorage.getItem("authToken");
 
+  const api = axios.create({
+    baseURL: "http://127.0.0.1:8000/api",
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      Accept: "application/json",
+    },
+  });
+
   const fetchDepartment = async () => {
+    if (!departmentId) return;
     try {
-      const res = await axios.get(`/api/departments/${departmentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      setLoading(true);
+      setError(null);
+      const res = await api.get(`/departments/${departmentId}`);
       setDepartment(res.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to fetch department:", err);
+      setError(err.response?.data?.message || "Failed to load department profile");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (departmentId) fetchDepartment();
+    fetchDepartment();
   }, [departmentId]);
-
-  if (!department) {
-    return <div className="p-6">Loading department profile...</div>;
-  }
 
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
       <aside className="w-64 bg-white shadow-lg flex flex-col">
-        <div className="p-6 text-xl font-bold border-b">{department.name}</div>
+        <div className="p-6 text-xl font-bold border-b">
+          {department?.name || "Department"}
+        </div>
         <nav className="flex-1 p-4 space-y-4">
-          <Link to={`/departments/${department.id}/profile`} className="flex items-center gap-3 p-2 rounded bg-gray-200 transition">
-            <FaUser /> Profile
+          <Link
+            to={`/department-dashboard`}
+            className="flex items-center gap-3 p-2 rounded bg-gray-200 transition"
+          >
+            <FaUser /> Dashboard
           </Link>
-          <Link to={`/departments/${department.id}/tasks`} className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition">
+          <Link
+            to={`/Tasks`}
+            className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition"
+          >
             <FaTasks /> Tasks
           </Link>
-          <Link to={`/departments/${department.id}/info`} className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition">
+          <Link
+            to={`/Info`}
+            className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition"
+          >
             <FaClipboardList /> Department Info
           </Link>
-          <Link to={`/departments/${department.id}/notifications`} className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition">
+          <Link
+            to={`/Notifications`}
+            className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition"
+          >
             <FaBell /> Notifications
           </Link>
         </nav>
@@ -67,17 +93,23 @@ const DepartmentProfile: React.FC = () => {
       {/* Main Content */}
       <main className="flex-1 p-6 overflow-auto">
         <header className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Department Profile</h1>
+          <h1 className="text-3xl font-bold">
+            {department?.name || "Department"} Profile
+          </h1>
         </header>
+
+        {/* Loading / Error */}
+        {loading && <p className="p-4 text-gray-600">Loading department profile...</p>}
+        {error && <p className="p-4 text-red-600">{error}</p>}
 
         {/* Overview */}
         <section className="mb-6">
           <h2 className="text-2xl font-semibold mb-4">Overview</h2>
           <div className="bg-white shadow rounded p-4 space-y-2">
-            <p><strong>Name:</strong> {department.name}</p>
-            <p><strong>Head:</strong> {department.head}</p>
-            <p><strong>Members:</strong> {department.membersCount}</p>
-            <p><strong>Description:</strong> {department.description}</p>
+            <p><strong>Name:</strong> {department?.name || "—"}</p>
+            <p><strong>Head:</strong> {department?.head || "—"}</p>
+            <p><strong>Members:</strong> {department?.membersCount ?? "—"}</p>
+            <p><strong>Description:</strong> {department?.description || "—"}</p>
           </div>
         </section>
 
@@ -94,17 +126,31 @@ const DepartmentProfile: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {department.members.map(member => (
-                  <tr key={member.id} className="border-t">
-                    <td className="p-4">{member.name}</td>
-                    <td className="p-4">{member.role}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded text-sm ${member.status === "Active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                        {member.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {department?.members?.length
+                  ? department.members.map(member => (
+                      <tr key={member.id} className="border-t">
+                        <td className="p-4">{member.name}</td>
+                        <td className="p-4">{member.role}</td>
+                        <td className="p-4">
+                          <span
+                            className={`px-2 py-1 rounded text-sm ${
+                              member.status === "Active"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {member.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  : (
+                    <tr>
+                      <td colSpan={3} className="p-4 text-gray-600 text-center">
+                        No members found.
+                      </td>
+                    </tr>
+                  )}
               </tbody>
             </table>
           </div>

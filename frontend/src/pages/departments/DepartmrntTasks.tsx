@@ -21,11 +21,11 @@ const DepartmentTasks: React.FC = () => {
         <div className="p-6 text-xl font-bold border-b">{department.name}</div>
         <nav className="flex-1 p-4 space-y-4">
           <Link
-            to="/Profile"
+            to="/department-dashboard"
             className="flex items-center gap-3 p-2 rounded hover:bg-gray-200 transition"
           >
             <FaUser />
-            Profile
+            Dashboard
           </Link>
           <Link
             to="/Tasks"

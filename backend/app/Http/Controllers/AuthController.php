@@ -2,71 +2,96 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    // Register a new user (patient)
+    /**
+     * Register a new patient user
+     */
     public function register(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
         ]);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => $request->password,
-            'role' => 'PATIENT', // default role
+            'name'     => $validated['name'],
+            'email'    => $validated['email'],
+            'password' => $validated['password'], // auto-hashed by model mutator
+            'role'     => 'patient',
         ]);
 
-        // Create corresponding patient record
-        $user->patient()->create([]);
+        // Create linked patient profile
+        $user->patient()->create();
 
-        $token = $user->createToken('authToken')->plainTextToken;
+        // Create Sanctum token
+        $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
-            'token' => $token
+            'message' => 'Registration successful',
+            'user'    => $user,
+            'token'   => $token,
         ], 201);
     }
 
-    // Login
+    /**
+     * Login user and issue Sanctum token
+     */
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
+        $validated = $request->validate([
+            'email'    => ['required', 'email'],
+            'password' => ['required', 'string'],
         ]);
 
-        if (!Auth::attempt($credentials)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+        if (!Auth::attempt($validated)) {
+            throw ValidationException::withMessages([
+                'email' => ['Invalid credentials.'],
+            ]);
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
-        $token = $user->createToken('authToken')->plainTextToken;
+
+        // Revoke previous tokens (recommended for APIs)
+        $user->tokens()->delete();
+
+        // Issue new token
+        $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
-            'token' => $token
+            'message' => 'Login successful',
+            'user'    => $user,
+            'token'   => $token,
         ]);
     }
 
-    // Logout
+    /**
+     * Logout current user (revoke current token)
+     */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Logged out successfully']);
+        return response()->json([
+            'message' => 'Logged out successfully',
+        ]);
     }
 
-    // Get current authenticated user
+    /**
+     * Get authenticated user
+     */
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        return response()->json([
+            'user' => $request->user(),
+        ]);
     }
 }

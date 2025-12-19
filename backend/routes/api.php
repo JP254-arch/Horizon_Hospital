@@ -11,6 +11,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
+use Illuminate\Http\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +23,13 @@ use App\Http\Controllers\AuthController;
 | have "/api" prefixed in the URL.
 |
 */
+
+Route::middleware('auth:sanctum')->get('/auth-test', function (Request $request) {
+    return response()->json([
+        'user' => $request->user(),
+    ]);
+});
+
 
 // -------------------------
 // PUBLIC ROUTES

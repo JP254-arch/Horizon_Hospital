@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
@@ -24,23 +25,32 @@ const Settings: React.FC = () => {
   const [theme, setTheme] = useState<"light" | "dark">(
     (localStorage.getItem("theme") as "light" | "dark") || "light"
   );
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const token = localStorage.getItem("authToken");
 
-  // Fetch user profile on mount
+  const api = axios.create({
+    baseURL: "http://127.0.0.1:8000/api",
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      Accept: "application/json",
+    },
+  });
+
+  // Fetch user profile
   useEffect(() => {
     const fetchUser = async () => {
-      setLoading(true);
       try {
-        const res = await axios.get("/api/users/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        setLoading(true);
+        setError(null);
+        const res = await api.get("/users/me");
         setUser(res.data);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to fetch user:", err);
+        setError(err.response?.data?.message || "Failed to fetch user data.");
       } finally {
         setLoading(false);
       }
@@ -57,7 +67,12 @@ const Settings: React.FC = () => {
     if (e.target.files?.[0]) {
       setProfileImageFile(e.target.files[0]);
       setUser((prev) =>
-        prev ? { ...prev, profileImageUrl: URL.createObjectURL(e.target.files![0]) } : prev
+        prev
+          ? {
+              ...prev,
+              profileImageUrl: URL.createObjectURL(e.target.files![0]),
+            }
+          : prev
       );
     }
   };
@@ -65,6 +80,7 @@ const Settings: React.FC = () => {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
+    setError(null);
 
     try {
       const formData = new FormData();
@@ -78,34 +94,36 @@ const Settings: React.FC = () => {
       formData.append("height", user.height);
       formData.append("weight", user.weight);
       formData.append("address", user.address);
-      if (profileImageFile) {
-        formData.append("profileImage", profileImageFile);
-      }
+      if (profileImageFile) formData.append("profileImage", profileImageFile);
 
-      await axios.patch("/api/users/me", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
+      await api.patch("/users/me", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
+
       alert("Profile updated successfully!");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to update profile:", err);
+      setError(err.response?.data?.message || "Failed to save changes.");
       alert("Failed to save changes.");
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading || !user) return <div className="p-6">Loading...</div>;
-
   return (
-    <div className={`flex h-screen ${theme === "dark" ? "bg-gray-900 text-white" : "bg-gray-100"}`}>
+    <div
+      className={`flex h-screen ${
+        theme === "dark" ? "bg-gray-900 text-white" : "bg-gray-100"
+      }`}
+    >
       {/* Sidebar */}
       <aside className="w-64 bg-gray-800 text-white p-6">
         <h2 className="text-2xl font-bold mb-8">User Panel</h2>
         <nav className="flex flex-col gap-4">
-          <Link to={getDashboardRoute(user.role)} className="hover:bg-gray-700 px-3 py-2 rounded">
+          <Link
+            to={user ? getDashboardRoute(user.role) : "/settings"}
+            className="hover:bg-gray-700 px-3 py-2 rounded"
+          >
             Dashboard
           </Link>
           <Link to="/settings" className="bg-gray-700 px-3 py-2 rounded">
@@ -123,25 +141,38 @@ const Settings: React.FC = () => {
           </div>
         </header>
 
+        {loading && <div>Loading user data...</div>}
+        {error && <div className="text-red-600 mb-4">{error}</div>}
+
         {/* Profile Image */}
         <section className="bg-white dark:bg-gray-200 rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Profile Image</h2>
-          <div className="flex items-center gap-6">
-            <div className="w-24 h-24 rounded-full bg-gray-300 overflow-hidden">
-              {user.profileImageUrl ? (
-                <img
-                  src={user.profileImageUrl}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-600">
-                  No Image
-                </div>
-              )}
-            </div>
-            <input type="file" accept="image/*" onChange={handleImageUpload} disabled={saving} />
+          <div className="w-24 h-24 rounded-full bg-gray-300 overflow-hidden">
+            {profileImageFile ? (
+              <img
+                src={URL.createObjectURL(profileImageFile)}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-600">
+                No Image
+              </div>
+            )}
           </div>
+
+          {/* File input */}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              if (e.target.files?.[0]) {
+                setProfileImageFile(e.target.files[0]);
+                // Optional: update user object for preview purposes
+                setUser((prev) => (prev ? { ...prev } : prev));
+              }
+            }}
+          />
         </section>
 
         {/* Personal Information */}
@@ -163,9 +194,15 @@ const Settings: React.FC = () => {
                 <input
                   type={field.type}
                   className="w-full border p-2 rounded"
-                  value={(user as any)[field.name]}
+                  value={(user as any)?.[field.name] ?? ""}
                   onChange={(e) =>
-                    setUser({ ...user, [field.name]: field.type === "number" ? Number(e.target.value) : e.target.value })
+                    setUser({
+                      ...user!,
+                      [field.name]:
+                        field.type === "number"
+                          ? Number(e.target.value)
+                          : e.target.value,
+                    })
                   }
                   disabled={saving}
                 />
@@ -176,8 +213,8 @@ const Settings: React.FC = () => {
               <label className="block text-sm mb-1">Gender</label>
               <select
                 className="w-full border p-2 rounded"
-                value={user.gender}
-                onChange={(e) => setUser({ ...user, gender: e.target.value })}
+                value={user?.gender ?? ""}
+                onChange={(e) => setUser({ ...user!, gender: e.target.value })}
                 disabled={saving}
               >
                 <option>Male</option>
@@ -191,8 +228,8 @@ const Settings: React.FC = () => {
               <textarea
                 className="w-full border p-2 rounded"
                 rows={3}
-                value={user.address}
-                onChange={(e) => setUser({ ...user, address: e.target.value })}
+                value={user?.address ?? ""}
+                onChange={(e) => setUser({ ...user!, address: e.target.value })}
                 disabled={saving}
               />
             </div>
